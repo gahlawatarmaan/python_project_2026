@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>House Price Predictor</title>
+<meta name="description" content="A linear regression model trained on 100,000 real house sales with gradient descent, running entirely in your browser.">
+<script>
+  (function () {
+    var t = null;
+    try { t = localStorage.getItem("theme"); } catch (e) {}
+    if (!t && window.matchMedia("(prefers-color-scheme: dark)").matches) t = "dark";
+    document.documentElement.setAttribute("data-theme", t || "light");
+  })();
+</script>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<nav>
+  <div class="wrap nav-in">
+    <a class="brand" id="brandBtn" href="#top">HousePrice<i>&middot;</i>ML</a>
+    <button class="theme-btn" id="themeBtn" aria-label="Toggle dark mode">
+      <svg class="ico-sun" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true">
+        <circle cx="12" cy="12" r="4.2"/>
+        <path d="M12 2v2.4M12 19.6V22M2 12h2.4M19.6 12H22M4.9 4.9l1.7 1.7M17.4 17.4l1.7 1.7M19.1 4.9l-1.7 1.7M6.6 17.4l-1.7 1.7"/>
+      </svg>
+      <svg class="ico-moon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true">
+        <path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z"/>
+      </svg>
+    </button>
+  </div>
+</nav>
+
+<header class="hero" id="hero">
+  <div class="hero-inner" id="heroInner">
+    <div class="wrap hero-center">
+      <div class="pill">
+        <span class="led" aria-hidden="true"></span>
+        <span>Model live</span>
+      </div>
+      <h1>Price any house,<span class="l2">instantly.</span></h1>
+    </div>
+
+    <div class="wrap hero-bottom">
+      <button class="text-cta" id="tryBtn">
+        <span>Try it yourself</span>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <path d="M12 5v14M6 13l6 6 6-6"/>
+        </svg>
+      </button>
+      <p class="dek">
+        A linear regression model trained on
+        <b>100,000 real house sales</b> with <b>gradient descent</b> &mdash;
+        <b>running entirely in your browser</b>.
+      </p>
+    </div>
+  </div>
+</header>
+
+<div class="spacer" aria-hidden="true"></div>
+
+<main class="app" id="app">
+  <div class="wrap app-grid" id="appGrid">
+
+    <svg class="wire-svg" id="wireSvg" aria-hidden="true" focusable="false">
+      <path class="wire-glow" id="wireGlow" d=""/>
+      <path class="wire-line" id="wireLine" d=""/>
+    </svg>
+
+    <section class="slab inputs" id="inputs" aria-labelledby="inputsTitle">
+      <div class="slab-shine" aria-hidden="true"></div>
+      <div class="slab-head">
+        <h2 class="slab-title" id="inputsTitle">Input</h2>
+        <span class="slab-sub">Features</span>
+      </div>
+      <div class="row">
+        <div class="row-head">
+          <label for="sqft_living">Living area</label>
+          <span class="val" id="v-sqft_living"></span>
+        </div>
+        <div class="track">
+          <input class="range" type="range" id="sqft_living" min="500" max="5583" step="10" value="2000" aria-label="Living area in square feet">
+          <span class="bubble" id="b-sqft_living" aria-hidden="true"></span>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="row-head">
+          <label for="lot_size">Lot size</label>
+          <span class="val" id="v-lot_size"></span>
+        </div>
+        <div class="track">
+          <input class="range" type="range" id="lot_size" min="602" max="23151" step="50" value="6250" aria-label="Lot size in square feet">
+          <span class="bubble" id="b-lot_size" aria-hidden="true"></span>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="row-head">
+          <label for="bedrooms">Bedrooms</label>
+          <span class="val" id="v-bedrooms"></span>
+        </div>
+        <div class="track">
+          <input class="range" type="range" id="bedrooms" min="1" max="6" step="1" value="4" aria-label="Number of bedrooms">
+          <span class="bubble" id="b-bedrooms" aria-hidden="true"></span>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="row-head">
+          <label for="bathrooms">Bathrooms</label>
+          <span class="val" id="v-bathrooms"></span>
+        </div>
+        <div class="track">
+          <input class="range" type="range" id="bathrooms" min="1" max="4" step="1" value="3" aria-label="Number of bathrooms">
+          <span class="bubble" id="b-bathrooms" aria-hidden="true"></span>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="row-head">
+          <label for="year_built">Year built</label>
+          <span class="val" id="v-year_built"></span>
+        </div>
+        <div class="track">
+          <input class="range" type="range" id="year_built" min="1950" max="2023" step="1" value="1986" aria-label="Year the house was built">
+          <span class="bubble" id="b-year_built" aria-hidden="true"></span>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="row-head">
+          <label for="condition_score">Condition score</label>
+          <span class="val" id="v-condition_score"></span>
+        </div>
+        <div class="track">
+          <input class="range" type="range" id="condition_score" min="1" max="5" step="1" value="3" aria-label="Condition score out of five">
+          <span class="bubble" id="b-condition_score" aria-hidden="true"></span>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="row-head">
+          <label for="distance_to_center_miles">Distance to centre</label>
+          <span class="val" id="v-distance_to_center_miles"></span>
+        </div>
+        <div class="track">
+          <input class="range" type="range" id="distance_to_center_miles" min="1" max="30" step="0.5" value="15.5" aria-label="Distance to city centre in miles">
+          <span class="bubble" id="b-distance_to_center_miles" aria-hidden="true"></span>
+        </div>
+      </div>
+
+    </section>
+
+    <div class="run-slot">
+      <button class="text-cta run" id="runBtn">
+        <span>RUN IT</span>
+      </button>
+    </div>
+
+    <div class="result-col">
+      <section class="slab result" id="result">
+        <div class="slab-shine" aria-hidden="true"></div>
+        <div class="result-inner">
+          <div class="eyebrow">Estimated price</div>
+          <div class="price is-empty" id="price" role="status" aria-live="polite">&mdash;</div>
+
+          <div class="meter" id="meter">
+            <div class="meter-track">
+              <i class="meter-fill" id="meterFill"></i>
+              <b class="meter-knob" id="meterKnob"></b>
+            </div>
+            <div class="meter-legend">
+              <span><em>Low</em><i id="lowVal">$59,007</i></span>
+              <span><em>High</em><i id="highVal">$1,456,490</i></span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <button class="reset-box" id="resetBtn"><span>Reset</span></button>
+
+      <div class="notes">
+        <p class="how">
+          <b>How it works</b> &mdash; features are min-max normalised, scored against
+          weights learned by batch gradient descent (10,000 iterations, &alpha; = 0.1),
+          then denormalised back to dollars.
+        </p>
+        <p class="specs">100,000 SAMPLES &middot; 7 FEATURES &middot; R&sup2; 0.9728 &middot; 100% CLIENT-SIDE</p>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<script src="app.js"></script>
+</body>
+</html>
