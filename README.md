@@ -6,7 +6,7 @@ entirely in the browser.
 
 **Team:** Armaan Gahlawat · Ananyo Sarkar
 
-**Website:** _add the live link here_
+**Website:** [(https://pythonproject20262.vercel.app)](https://pythonproject20262.vercel.app)
 
 ---
 
